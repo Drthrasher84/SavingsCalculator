@@ -16,15 +16,25 @@
       color: #2c3e50;
     }
     label {
-      display: block;
-      margin-top: 10px;
       font-weight: bold;
     }
-    input[type="number"] {
-      width: 100%;
-      padding: 8px;
+    .rep-entry {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       margin-bottom: 10px;
-      box-sizing: border-box;
+    }
+    .rep-entry input[type="text"],
+    .rep-entry input[type="number"] {
+      padding: 6px;
+      width: 40%;
+    }
+    .rep-entry button {
+      background: red;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      cursor: pointer;
     }
     button {
       padding: 10px 20px;
@@ -49,40 +59,70 @@
   <h1>Call Efficiency Savings Tracker</h1>
   <form id="repForm">
     <div id="repInputs"></div>
+    <button type="button" onclick="addRep()">Add Rep</button>
     <button type="button" onclick="calculateSavings()">Calculate Savings</button>
   </form>
 
   <div class="result" id="result"></div>
 
   <script>
-    const numReps = 8;
     const costPerCall = 2.5;
-    const repInputsDiv = document.getElementById('repInputs');
 
-    // Create input fields for each rep
-    for (let i = 1; i <= numReps; i++) {
-      const savedValue = localStorage.getItem(`rep${i}`) || '';
-      repInputsDiv.innerHTML += `
-        <label for="rep${i}">Rep ${i} - Calls Serviced:</label>
-        <input type="number" id="rep${i}" value="${savedValue}" min="0">
-      `;
+    function loadReps() {
+      const repData = JSON.parse(localStorage.getItem('reps') || '[]');
+      const repInputs = document.getElementById('repInputs');
+      repInputs.innerHTML = '';
+      repData.forEach((rep, index) => {
+        repInputs.innerHTML += `
+          <div class="rep-entry" id="rep${index}">
+            <input type="text" placeholder="Rep Name" value="${rep.name}" onchange="updateRepName(${index}, this.value)">
+            <input type="number" placeholder="Calls Serviced" value="${rep.calls}" onchange="updateRepCalls(${index}, this.value)" min="0">
+            <button onclick="removeRep(${index})">X</button>
+          </div>
+        `;
+      });
+    }
+
+    function addRep() {
+      const reps = JSON.parse(localStorage.getItem('reps') || '[]');
+      reps.push({ name: '', calls: 0 });
+      localStorage.setItem('reps', JSON.stringify(reps));
+      loadReps();
+    }
+
+    function updateRepName(index, value) {
+      const reps = JSON.parse(localStorage.getItem('reps') || '[]');
+      reps[index].name = value;
+      localStorage.setItem('reps', JSON.stringify(reps));
+    }
+
+    function updateRepCalls(index, value) {
+      const reps = JSON.parse(localStorage.getItem('reps') || '[]');
+      reps[index].calls = parseInt(value) || 0;
+      localStorage.setItem('reps', JSON.stringify(reps));
+    }
+
+    function removeRep(index) {
+      const reps = JSON.parse(localStorage.getItem('reps') || '[]');
+      reps.splice(index, 1);
+      localStorage.setItem('reps', JSON.stringify(reps));
+      loadReps();
     }
 
     function calculateSavings() {
+      const reps = JSON.parse(localStorage.getItem('reps') || '[]');
       let totalSavings = 0;
       let results = '';
-
-      for (let i = 1; i <= numReps; i++) {
-        const calls = parseInt(document.getElementById(`rep${i}`).value) || 0;
-        localStorage.setItem(`rep${i}`, calls);
-        const savings = calls * costPerCall;
+      reps.forEach((rep, index) => {
+        const savings = rep.calls * costPerCall;
         totalSavings += savings;
-        results += `Rep ${i}: $${savings.toFixed(2)} saved<br>`;
-      }
-
+        results += `${rep.name || 'Rep ' + (index + 1)}: $${savings.toFixed(2)} saved<br>`;
+      });
       results += `<strong>Total Team Savings: $${totalSavings.toFixed(2)}</strong>`;
       document.getElementById('result').innerHTML = results;
     }
+
+    window.onload = loadReps;
   </script>
 </body>
 </html>
