@@ -3,25 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Call Efficiency Savings Calculator</title>
+  <title>Call Efficiency Savings Tracker</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
-      background-color: #f9f9f9;
-      max-width: 600px;
+      background-color: #f0f4f8;
+      max-width: 700px;
       margin: auto;
     }
     h1 {
       color: #2c3e50;
     }
-    label, input {
+    label {
       display: block;
-      margin-bottom: 10px;
+      margin-top: 10px;
+      font-weight: bold;
     }
     input[type="number"] {
       width: 100%;
       padding: 8px;
+      margin-bottom: 10px;
       box-sizing: border-box;
     }
     button {
@@ -30,6 +32,7 @@
       color: white;
       border: none;
       cursor: pointer;
+      margin-top: 10px;
     }
     button:hover {
       background-color: #2980b9;
@@ -43,36 +46,42 @@
   </style>
 </head>
 <body>
-  <h1>Call Efficiency Savings Calculator</h1>
-  <label for="totalCalls">Total Calls:</label>
-  <input type="number" id="totalCalls" placeholder="e.g., 1000">
-
-  <label for="fullyServiced">% Fully Serviced Calls (0-100):</label>
-  <input type="number" id="fullyServiced" placeholder="e.g., 90">
-
-  <button onclick="calculateSavings()">Calculate Savings</button>
+  <h1>Call Efficiency Savings Tracker</h1>
+  <form id="repForm">
+    <div id="repInputs"></div>
+    <button type="button" onclick="calculateSavings()">Calculate Savings</button>
+  </form>
 
   <div class="result" id="result"></div>
 
   <script>
-    function calculateSavings() {
-      const costPerCall = 2.5;
-      const totalCalls = parseFloat(document.getElementById('totalCalls').value);
-      const percentServiced = parseFloat(document.getElementById('fullyServiced').value);
+    const numReps = 8;
+    const costPerCall = 2.5;
+    const repInputsDiv = document.getElementById('repInputs');
 
-      if (isNaN(totalCalls) || isNaN(percentServiced)) {
-        document.getElementById('result').innerText = 'Please enter valid numbers.';
-        return;
+    // Create input fields for each rep
+    for (let i = 1; i <= numReps; i++) {
+      const savedValue = localStorage.getItem(`rep${i}`) || '';
+      repInputsDiv.innerHTML += `
+        <label for="rep${i}">Rep ${i} - Calls Serviced:</label>
+        <input type="number" id="rep${i}" value="${savedValue}" min="0">
+      `;
+    }
+
+    function calculateSavings() {
+      let totalSavings = 0;
+      let results = '';
+
+      for (let i = 1; i <= numReps; i++) {
+        const calls = parseInt(document.getElementById(`rep${i}`).value) || 0;
+        localStorage.setItem(`rep${i}`, calls);
+        const savings = calls * costPerCall;
+        totalSavings += savings;
+        results += `Rep ${i}: $${savings.toFixed(2)} saved<br>`;
       }
 
-      const servicedCalls = totalCalls * (percentServiced / 100);
-      const savings = servicedCalls * costPerCall;
-
-      document.getElementById('result').innerHTML = `
-        <strong>Results:</strong><br>
-        Serviced Calls: ${servicedCalls.toFixed(0)}<br>
-        Savings: $${savings.toFixed(2)}
-      `;
+      results += `<strong>Total Team Savings: $${totalSavings.toFixed(2)}</strong>`;
+      document.getElementById('result').innerHTML = results;
     }
   </script>
 </body>
